@@ -6,17 +6,24 @@ void Predictor::readAFile(string file){
 	unsigned long long target;
 	ifstream infile(file.c_str());
 	string infoVal;
+	int counter = 0;
 	while(infile>>hex>>addr>>behavior>>hex>>target){
+		branchTargetBuffer buf;
+		buf.btbAddress = addr;
 		numBranches++;
 		myData data;
 		data.address = addr;
 		if(behavior == "T"){
 			data.branchVal = "T";
+			buf.btbBranchVal = "T";
 		}
 		else{
 			data.branchVal = "NT";
+			buf.btbBranchVal = "NT";
 		}
+		counter++;
 		info.push_back(data);
+		buff.push_back(buf);
 	}
 	infile.close();
 }
@@ -254,6 +261,73 @@ void Predictor::tournament(){
 	}
 	output.push_back(correctP);
 }
+void Predictor::BTB(){
+	/*. In this part of the project, you are asked to model
+	the Branch Target Buffer performance. Assume that the Branch Target Buffer is
+	integrated with the Bimodal Predictor of size 512 entries, which is initialized as
+	discussed in question (3). The size of the Branch Target Buffer is 128 entries. If a
+	prediction is “taken”, then the target address is read from the BTB. Estimate the
+	number of BTB accesses and BTB hits.*/
+
+	vector<unsigned int> predCount(512,3); 
+	vector<unsigned int> btbCount(128);
+	unsigned int compare;
+	unsigned int btbAccess;
+	unsigned int btbHit;
+
+		for(unsigned long long i = 0; i<info.size(); i++){
+			unsigned long long j;
+			j=i;
+			if(j < 128){
+
+				buff[j].btbAddress = info[i].address;
+				buff[j].btbBranchVal = info[i].branchVal;
+			}
+			if(j == 128){
+				j=0;
+				buff[j].btbAddress = info[i].address;
+				buff[j].btbBranchVal = info[i].branchVal;
+			} 
+			if(info[i].branchVal == "T"){ //t is 1
+				compare = 1;
+			}
+			if(info[i].branchVal == "NT"){ //nt = 0
+				compare = 0;
+			}
+			//we are checking to see if
+			int tableKey;
+			int btbTableKey;
+			tableKey = info[i].address % 512; //an index for the least significant bit of the state
+			btbTableKey = buff[j].btbAddress % 128;
+			unsigned int currentState = predCount[tableKey];
+			unsigned int btbCurrentState = btbCount[btbTableKey];
+			//get the current state from the prediction counter	
+			if((compare << 1) == (btbCurrentState & 2)){
+				btbAccess++;
+				btbHit++;
+			}
+			if(compare == 1){
+				//not ST
+
+				if(currentState!=3){
+					currentState++;
+					btbCurrentState++;
+					btbAccess++;
+				}
+			}
+			else { //not SNT
+				if(currentState!=0){
+					currentState--;
+					btbCurrentState--;
+
+				}
+			}
+			predCount[tableKey] = currentState;
+			btbCount[btbTableKey] = btbCurrentState;
+		}
+		cout << btbAccess<< "," << btbHit <<"; "<<endl;
+		//out << btbAccess<<"," << btbHit << "; ";
+}
 
 int main(int argc, char **argv){
 	Predictor pred;
@@ -293,5 +367,6 @@ int main(int argc, char **argv){
 	//test tournament
 	pred.tournament();
 	pred.writeAFile(argv[2]);
+	//pred.BTB();
 	return 0;
 }

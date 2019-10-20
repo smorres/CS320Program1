@@ -13,18 +13,26 @@ struct myData{
 	unsigned long long address;
 	std::string branchVal;
 };
+
+struct branchTargetBuffer{
+	unsigned long long btbAddress;
+	std::string btbBranchVal;
+};
+
 class Predictor{
 	public:
 		unsigned long long correct;
 		long long numBranches;
 		std::vector<myData> info; //contains an address and a branch value
-		std::vector<unsigned long long> output; //contains the prediction type and the number correct
+		std::vector<unsigned long long> output; //contains the prediction type and the number correct		
+		std::vector<branchTargetBuffer> buff;
 		void readAFile(std::string file);
 		void writeAFile(std::string file);
 		void alwaysTakenOrNotTaken(std::string takenornottaken);
 		void biPrediction(int sizeTable, int singleOrDoubleBit); //arg 2 is 1 or
 		void gShare(int gCount);
 		void tournament();
+		void BTB();
 		
 };
 
