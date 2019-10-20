@@ -24,9 +24,9 @@ void Predictor::writeAFile(string file){
 	ofstream out(file.c_str());
 	for(unsigned int i = 0; i<output.size();i++){
 		out << output[i]<< "," << numBranches <<"; ";
-		if(i==0||i==1||i==8||i==17||i==26||i==27)out<<"\n"; 
+		if(i==0||i==1||i==9||i==17||i==26||i==27)out<<"\n"; 
 		cout << output[i]<< "," << numBranches <<"; ";
-		if(i==0||i==1||i==8||i==17||i==26||i==27)cout<<"\n";
+		if(i==0||i==1||i==9||i==17||i==26||i==27)cout<<"\n";
 	}
 	out.close();
 }
@@ -41,12 +41,11 @@ void Predictor::alwaysTakenOrNotTaken(string torn){
 			nTakenCount++;
 		}
 	}
-	
 	if(torn == "at"){
 		output.push_back(takenCount);
 	}
-	else if(torn == "ant"){
-		output.push_back(takenCount);	
+	if(torn == "ant"){
+		output.push_back(nTakenCount);	
 	}
 	
 }
