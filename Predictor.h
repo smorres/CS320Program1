@@ -9,27 +9,22 @@
 #include <sstream>
 #include <fstream>
 #include <bitset>
-struct mDat{
+struct myData{
 	unsigned long long address;
 	std::string branchVal;
 };
-struct ans{
-	std::string predType; //might not need this
-	unsigned long long correct;
-};
 class Predictor{
 	public:
+		unsigned long long correct;
 		long long numBranches;
-		std::vector<mDat> info; //contains an address and a branch value
-		std::vector<ans> output; //contains the prediction type and the number correct
+		std::vector<myData> info; //contains an address and a branch value
+		std::vector<unsigned long long> output; //contains the prediction type and the number correct
 		void readAFile(std::string file);
 		void writeAFile(std::string file);
 		void alwaysTakenOrNotTaken(std::string takenornottaken);
-		//void alwaysNotTaken();
-		void biPrediction(int sizeTable, int singleOrDoubleBit); //arg 2 is 1 or 2
-		//void biPredDouble(int sizeTable);
-		//void gShare(int grBits, int gCount);
-		//void tournament(int biTable, int gShareTable, int tourTable, int grBits);
+		void biPrediction(int sizeTable, int singleOrDoubleBit); //arg 2 is 1 or
+		void gShare(int gCount);
+		void tournament();
 		
 };
 
