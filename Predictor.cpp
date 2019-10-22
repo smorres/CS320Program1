@@ -6,35 +6,32 @@ void Predictor::readAFile(string file){
 	unsigned long long target;
 	ifstream infile(file.c_str());
 	string infoVal;
-	int counter = 0;
 	while(infile>>hex>>addr>>behavior>>hex>>target){
-		branchTargetBuffer buf;
-		buf.btbAddress = addr;
 		numBranches++;
 		myData data;
 		data.address = addr;
+		data.target = target;
 		if(behavior == "T"){
 			data.branchVal = "T";
-			buf.btbBranchVal = "T";
 		}
 		else{
 			data.branchVal = "NT";
-			buf.btbBranchVal = "NT";
 		}
-		counter++;
 		info.push_back(data);
-		buff.push_back(buf);
 	}
 	infile.close();
 }
 void Predictor::writeAFile(string file){
 	ofstream out(file.c_str());
-	for(unsigned int i = 0; i<output.size();i++){
+	for(unsigned int i = 0; i<output.size()-1;i++){
 		out << output[i]<< "," << numBranches <<"; ";
-		if(i==0||i==1||i==9||i==17||i==26||i==27)out<<"\n"; 
+		if(i==0||i==1||i==9||i==17||i==26||i==27||i==28)out<<"\n"; 
 		cout << output[i]<< "," << numBranches <<"; ";
-		if(i==0||i==1||i==9||i==17||i==26||i==27)cout<<"\n";
+		if(i==0||i==1||i==9||i==17||i==26||i==27||i==28)cout<<"\n";
 	}
+	unsigned int x = output.size()-1;
+		out << numberAccess << "," << output[x] <<"; "<<"\n";
+		cout << numberAccess << "," << output[x]  <<"; "<<"\n";
 	out.close();
 }
 void Predictor::alwaysTakenOrNotTaken(string torn){
@@ -95,20 +92,24 @@ void Predictor::biPrediction(int sizeOfTable, int singleOrDouble){
 			}
 			//we are checking to see if
 			int tableKey;
-			tableKey = info[i].address % sizeOfTable; //an index for the least significant bit of the state
+			//an index for the least significant bit of the state
+			tableKey = info[i].address % sizeOfTable; 
 			unsigned int currentState = predCount[tableKey];
-			//get the current state from the prediction counter	
-			
+			//get the current state from the prediction counter
+			//cur state &2 will == 2 only if predhist is wt or st
+			//else will == 0 if wnt or snt
+			//if compare<<1 == 2 if T and 0 if NT	
 			if((compare << 1) == (currentState & 2)){
 				correctP++;
 			}
+			
 			if(compare == 1){
-				//not ST
+				//check not ST
 				if(currentState!=3){
 					currentState++;
 				}
 			}
-			else { //not SNT
+			else { //check not SNT
 				if(currentState!=0){
 					currentState--;
 				}
@@ -170,8 +171,8 @@ void Predictor::tournament(){
 	
 	unsigned int compare; //compare is used because branch value is a string and must be compared with an int
 	for(unsigned int i = 0; i < info.size(); i++){
-	
-		unsigned int updatedHistSize = history & ((unsigned int)(-1 + pow(2,11))); //11 bit hist
+		//11 bit hist
+		unsigned int updatedHistSize = history & ((unsigned int)(-1 + pow(2,11))); 
 		unsigned long long infoAdd = info[i].address;
 		
 		int currentGshare = (infoAdd ^ updatedHistSize) % 2048;
@@ -180,8 +181,7 @@ void Predictor::tournament(){
 		
 		unsigned int currentStateGshare = globalC[currentGshare];
 		unsigned int currentStateTourn = tournamentC[currentTourn];
-		unsigned int currentStateBimod = bimodC[currentBimod];
-		
+		unsigned int currentStateBimod = bimodC[currentBimod];	
 		unsigned int bimodPred = currentStateBimod & 2;
 		unsigned int gsharePred = currentStateGshare & 2;
 		
@@ -211,8 +211,8 @@ void Predictor::tournament(){
 		}
 		//shift hist before or with current branchValue
 		//to keep track of the history and current and then update.
-		history = history << 1; 
-		history = history | compare;
+		history = history << 1; //keep track of the history
+		history = history | compare; //this appends the current branch value to the hist
 		globalC[currentGshare] = currentStateGshare;
 		bimodC[currentBimod] = currentStateBimod;
 		
@@ -261,6 +261,7 @@ void Predictor::tournament(){
 	}
 	output.push_back(correctP);
 }
+
 void Predictor::BTB(){
 	/*. In this part of the project, you are asked to model
 	the Branch Target Buffer performance. Assume that the Branch Target Buffer is
@@ -268,65 +269,52 @@ void Predictor::BTB(){
 	discussed in question (3). The size of the Branch Target Buffer is 128 entries. If a
 	prediction is “taken”, then the target address is read from the BTB. Estimate the
 	number of BTB accesses and BTB hits.*/
-
-	vector<unsigned int> predCount(512,3); 
-	vector<unsigned int> btbCount(128);
-	unsigned int compare;
-	unsigned int btbAccess;
-	unsigned int btbHit;
-
-		for(unsigned long long i = 0; i<info.size(); i++){
-			unsigned long long j;
-			j=i;
-			if(j < 128){
-
-				buff[j].btbAddress = info[i].address;
-				buff[j].btbBranchVal = info[i].branchVal;
-			}
-			if(j == 128){
-				j=0;
-				buff[j].btbAddress = info[i].address;
-				buff[j].btbBranchVal = info[i].branchVal;
-			} 
-			if(info[i].branchVal == "T"){ //t is 1
-				compare = 1;
-			}
-			if(info[i].branchVal == "NT"){ //nt = 0
-				compare = 0;
-			}
-			//we are checking to see if
-			int tableKey;
-			int btbTableKey;
-			tableKey = info[i].address % 512; //an index for the least significant bit of the state
-			btbTableKey = buff[j].btbAddress % 128;
-			unsigned int currentState = predCount[tableKey];
-			unsigned int btbCurrentState = btbCount[btbTableKey];
-			//get the current state from the prediction counter	
-			if((compare << 1) == (btbCurrentState & 2)){
-				btbAccess++;
-				btbHit++;
-			}
-			if(compare == 1){
-				//not ST
-
-				if(currentState!=3){
-					currentState++;
-					btbCurrentState++;
-					btbAccess++;
-				}
-			}
-			else { //not SNT
-				if(currentState!=0){
-					currentState--;
-					btbCurrentState--;
-
-				}
-			}
-			predCount[tableKey] = currentState;
-			btbCount[btbTableKey] = btbCurrentState;
+	vector<unsigned int> predCount(512,1);
+	//first is addr branch second is predicted taret address
+	vector<pair<unsigned long long, unsigned long long>> btb(128); 
+	int tableKey;
+	int correctP=0;
+	long long numAccess = 0;
+	for(unsigned long long i = 0; i<info.size(); i++){
+		tableKey = info[i].address % 512;
+		unsigned int compare;
+		if(info[i].branchVal == "T"){ //t is 1
+			compare = 1;
 		}
-		cout << btbAccess<< "," << btbHit <<"; "<<endl;
-		//out << btbAccess<<"," << btbHit << "; ";
+		if(info[i].branchVal == "NT"){ //nt = 0
+			compare = 0;
+		}
+		int newIndex = info[i].address % 128;
+
+		if(predCount[tableKey] == 1){ //if current branch is taken
+			//if taken then we access BTB
+			numAccess++; 
+			//if out btb addr = actual address
+			if(btb[newIndex].first == info[i].address){
+				//and if our btb target == actual target
+				if(btb[newIndex].second == info[i].target){
+					//then we have a correct pred
+					correctP++;
+				}
+				else{
+					//else we update our btb target to our info target
+					btb[newIndex].second = info[i].target;
+				}
+			}
+			else{
+				//then we set the info address and target to btb address and target
+				btb[newIndex].first = info[i].address;
+				btb[newIndex].second = info[i].target;
+			}
+		}
+		//update our prediciton count to equal the value of compare (1,0)
+		predCount[tableKey] = compare;
+	}	
+		
+
+	this->numberAccess = numAccess;
+	output.push_back(correctP);	
+	
 }
 
 int main(int argc, char **argv){
@@ -366,7 +354,7 @@ int main(int argc, char **argv){
 	pred.gShare(11);
 	//test tournament
 	pred.tournament();
+	pred.BTB();
 	pred.writeAFile(argv[2]);
-	//pred.BTB();
 	return 0;
 }

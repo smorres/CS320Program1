@@ -12,20 +12,17 @@
 struct myData{
 	unsigned long long address;
 	std::string branchVal;
+	unsigned long long target;
 };
 
-struct branchTargetBuffer{
-	unsigned long long btbAddress;
-	std::string btbBranchVal;
-};
 
 class Predictor{
 	public:
 		unsigned long long correct;
 		long long numBranches;
+		long long numberAccess;
 		std::vector<myData> info; //contains an address and a branch value
-		std::vector<unsigned long long> output; //contains the prediction type and the number correct		
-		std::vector<branchTargetBuffer> buff;
+		std::vector<unsigned long long> output; 
 		void readAFile(std::string file);
 		void writeAFile(std::string file);
 		void alwaysTakenOrNotTaken(std::string takenornottaken);
