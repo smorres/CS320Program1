@@ -4,7 +4,9 @@
 
 ## SUMMARY
 
-Team Members: Shane Morris
+Name: Shane Morris
+BU-ID: smorri11
+B-Number: B00678215
 
 C++ program that uses provided traces to measure the
 accuracy of various dynamic branch predictors 
